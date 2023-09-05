@@ -16,24 +16,58 @@ impl FromStr for Floors {
 
 impl Floors {
     fn floor(&self) -> isize {
+        self.0.chars().fold(0, |acc, c| match c {
+            '(' => acc + 1,
+            ')' => acc - 1,
+            _ => panic!("unknown character: {}", c),
+        })
+    }
+
+    fn position(&self, floor: isize) -> Option<usize> {
         let mut v = 0;
-        for c in self.0.chars() {
+
+        for (i, c) in self.0.chars().enumerate() {
             match c {
                 '(' => v += 1,
                 ')' => v -= 1,
                 _ => panic!("unknown character: {}", c),
             }
+
+            if v == floor {
+                return Some(i + 1);
+            }
         }
-        v
+
+        None
     }
+}
+
+struct Task {
+    floors: Floors,
+}
+
+impl Task {
+    fn part1(&self) -> isize {
+        self.floors.floor()
+    }
+
+    fn part2(&self) -> usize {
+        self.floors.position(-1).expect("floor not reached")
+    }
+}
+
+fn parse(s: &str) -> Result<Task> {
+    let floors = s.parse::<Floors>()?;
+    Ok(Task { floors })
 }
 
 fn main() -> Result<()> {
     let mut s = String::new();
     io::stdin().read_to_string(&mut s)?;
-    let res = s.trim().parse::<Floors>()?;
+    let task = parse(&s)?;
 
-    println!("part 1: {}", res.floor());
+    println!("part 1: {}", task.part1());
+    println!("part 2: {}", task.part2());
 
     Ok(())
 }
@@ -59,8 +93,15 @@ mod tests {
     }
 
     #[test]
+    fn part2() {
+        assert_eq!(parse(")").unwrap().part2(), 1);
+        assert_eq!(parse("()())").unwrap().part2(), 5);
+    }
+
+    #[test]
     fn input() {
-        let res = include_str!("../data/input.txt").parse::<Floors>().unwrap();
-        assert_eq!(res.floor(), 138);
+        let task = parse(include_str!("../data/input.txt")).unwrap();
+        assert_eq!(task.part1(), 138);
+        assert_eq!(task.part2(), 1771);
     }
 }
